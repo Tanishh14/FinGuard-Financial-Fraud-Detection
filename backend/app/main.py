@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.session import engine
 from app.db.base import Base
+from app.explainability.router import router as explain_router
+app.include_router(explain_router, prefix="/explainability", tags=["Explainability"])
 from app.auth.router import router as auth_router
 from app.transactions.router import router as tx_router
 from app.realtime.timewebsocket import realtime_transactions_ws
