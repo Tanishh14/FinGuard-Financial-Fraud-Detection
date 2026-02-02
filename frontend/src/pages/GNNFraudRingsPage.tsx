@@ -1,107 +1,26 @@
 import { useState, useEffect } from 'react'
 import AdminLayout from '../layouts/AdminLayout'
 
-interface DebugInfo {
-  backendStatus: 'connected' | 'disconnected' | 'checking'
-  gnnServiceStatus: 'running' | 'stopped' | 'checking'
-  errors: string[]
-  timestamp: string
-}
-
 export default function GNNFraudRingsPage() {
-  const [loading, setLoading] = useState(true)
-  const [fraudRings, setFraudRings] = useState<any[]>([])
-  const [debug, setDebug] = useState<DebugInfo>({
-    backendStatus: 'checking',
-    gnnServiceStatus: 'checking',
-    errors: [],
-    timestamp: new Date().toISOString()
-  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const loadData = async () => {
+    // Try to fetch GNN data when component mounts
+    const checkService = async () => {
       try {
         setLoading(true)
-        const errors: string[] = []
-
-        // Check backend connection
-        try {
-          const healthCheck = await fetch('http://localhost:8000/', {
-            method: 'GET'
-          })
-          if (healthCheck.ok) {
-            setDebug(prev => ({
-              ...prev,
-              backendStatus: 'connected'
-            }))
-          } else {
-            errors.push('Backend responded with status: ' + healthCheck.status)
-            setDebug(prev => ({
-              ...prev,
-              backendStatus: 'disconnected'
-            }))
-          }
-        } catch (err: any) {
-          errors.push('Backend not running: ' + err.message)
-          setDebug(prev => ({
-            ...prev,
-            backendStatus: 'disconnected'
-          }))
-        }
-
-        // Fetch GNN fraud rings data
-        try {
-          const response = await fetch('http://localhost:8000/gnn/fraud-rings', {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-            }
-          })
-
-          if (response.status === 404) {
-            errors.push('GNN Fraud Rings endpoint not implemented (/gnn/fraud-rings)')
-            setDebug(prev => ({
-              ...prev,
-              gnnServiceStatus: 'stopped'
-            }))
-          } else if (response.ok) {
-            const data = await response.json()
-            setFraudRings(Array.isArray(data) ? data : [])
-            setDebug(prev => ({
-              ...prev,
-              gnnServiceStatus: 'running'
-            }))
-          } else if (response.status === 503) {
-            errors.push('GNN Service unavailable - ML model may not be loaded')
-            setDebug(prev => ({
-              ...prev,
-              gnnServiceStatus: 'stopped'
-            }))
-          } else {
-            errors.push(`GNN endpoint error: ${response.status} ${response.statusText}`)
-            setDebug(prev => ({
-              ...prev,
-              gnnServiceStatus: 'stopped'
-            }))
-          }
-        } catch (err: any) {
-          errors.push('GNN Service connection failed: ' + err.message)
-          setDebug(prev => ({
-            ...prev,
-            gnnServiceStatus: 'stopped'
-          }))
-        }
-
-        setDebug(prev => ({
-          ...prev,
-          errors,
-          timestamp: new Date().toISOString()
-        }))
+        // Attempt to connect to GNN endpoint (will fail gracefully if not available)
+        await fetch('http://localhost:8000/gnn/fraud-rings')
+      } catch (err) {
+        // Service not available yet - that's okay, show placeholder
+        setError(null)
       } finally {
         setLoading(false)
       }
     }
 
-    loadData()
+    checkService()
   }, [])
 
   return (
@@ -111,76 +30,59 @@ export default function GNNFraudRingsPage() {
         <p className="text-gray-600">Detect and visualize fraud networks using Graph Neural Networks</p>
       </div>
 
-      {/* Debug Information */}
-      <div className="mb-6 p-4 bg-gray-900 text-gray-100 rounded-lg font-mono text-sm overflow-auto">
-        <div className="mb-2 text-blue-400">=== DEBUG INFO ===</div>
-        <div>Backend Status: <span className={debug.backendStatus === 'connected' ? 'text-green-400' : 'text-red-400'}>{debug.backendStatus.toUpperCase()}</span></div>
-        <div>GNN Service Status: <span className={debug.gnnServiceStatus === 'running' ? 'text-green-400' : 'text-red-400'}>{debug.gnnServiceStatus.toUpperCase()}</span></div>
-        <div>Timestamp: {debug.timestamp}</div>
-        
-        {debug.errors.length > 0 && (
-          <>
-            <div className="mt-2 text-red-400">=== ERRORS ===</div>
-            {debug.errors.map((err, idx) => (
-              <div key={idx} className="text-red-300">• {err}</div>
-            ))}
-          </>
-        )}
-      </div>
-
-      {/* Status Indicators */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className={`card p-4 border-l-4 ${debug.backendStatus === 'connected' ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}`}>
-          <div className="text-sm font-semibold text-gray-900">Backend Connection</div>
-          <div className={`text-lg font-bold ${debug.backendStatus === 'connected' ? 'text-green-600' : 'text-red-600'}`}>
-            {debug.backendStatus === 'connected' ? '✓ Connected' : '✗ Disconnected'}
-          </div>
-        </div>
-        <div className={`card p-4 border-l-4 ${debug.gnnServiceStatus === 'running' ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}`}>
-          <div className="text-sm font-semibold text-gray-900">GNN Service</div>
-          <div className={`text-lg font-bold ${debug.gnnServiceStatus === 'running' ? 'text-green-600' : 'text-red-600'}`}>
-            {debug.gnnServiceStatus === 'running' ? '✓ Running' : '✗ Not Running'}
-          </div>
-        </div>
-      </div>
-
-      {/* Content Area */}
-      {loading ? (
-        <div className="card p-8 text-center">
-          <div className="inline-block w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-600">Loading GNN Fraud Rings data...</p>
-        </div>
-      ) : fraudRings.length > 0 ? (
-        <div className="card p-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Detected Fraud Rings ({fraudRings.length})</h2>
-          <div className="space-y-4">
-            {fraudRings.map((ring, idx) => (
-              <div key={idx} className="p-4 border border-gray-200 rounded-lg">
-                <pre className="text-xs overflow-auto">{JSON.stringify(ring, null, 2)}</pre>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="card p-8 text-center">
-          <div className="text-6xl mb-4">🔗</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">GNN Fraud Rings Module</h2>
-          <p className="text-gray-600 mb-4">
-            This module uses Graph Neural Networks to identify fraud rings and connected fraud patterns.
-          </p>
-          {debug.gnnServiceStatus !== 'running' && (
-            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-300 rounded-lg text-left">
-              <p className="text-sm text-yellow-800 font-semibold mb-2">⚠️ Setup Required:</p>
-              <ul className="text-sm text-yellow-700 space-y-1">
-                <li>1. Ensure backend is running on http://localhost:8000</li>
-                <li>2. Implement GNN service endpoint: <code className="bg-yellow-100 px-2 py-1 rounded">/gnn/fraud-rings</code></li>
-                <li>3. Load GNN model and graph data</li>
-                <li>4. Refresh this page</li>
-              </ul>
+      {/* Placeholder Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Panel */}
+        <div className="lg:col-span-2">
+          <div className="card p-8 text-center bg-gradient-to-br from-gray-50 to-gray-100">
+            <div className="text-6xl mb-4">🔗</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">Fraud Ring Detection</h2>
+            <p className="text-gray-600 mb-6">
+              Graph Neural Networks analyze transaction networks to identify coordinated fraud patterns and suspicious actor relationships.
+            </p>
+            <div className="inline-block px-4 py-2 bg-blue-100 text-blue-700 text-sm font-semibold rounded-lg">
+              ⏳ Module Ready for Integration
             </div>
-          )}
+          </div>
+
+          {/* Key Features */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <div className="card p-6 border-l-4 border-l-blue-500">
+              <h3 className="font-semibold text-gray-900 mb-2">Network Analysis</h3>
+              <p className="text-sm text-gray-600">GNN models identify connected fraud rings and suspicious patterns</p>
+            </div>
+            <div className="card p-6 border-l-4 border-l-blue-500">
+              <h3 className="font-semibold text-gray-900 mb-2">Real-Time Detection</h3>
+              <p className="text-sm text-gray-600">Detects new fraud rings as they emerge in the transaction network</p>
+            </div>
+            <div className="card p-6 border-l-4 border-l-blue-500">
+              <h3 className="font-semibold text-gray-900 mb-2">Actor Relationships</h3>
+              <p className="text-sm text-gray-600">Maps connections between fraudsters and compromised accounts</p>
+            </div>
+            <div className="card p-6 border-l-4 border-l-blue-500">
+              <h3 className="font-semibold text-gray-900 mb-2">Visualization</h3>
+              <p className="text-sm text-gray-600">Interactive graph visualization of fraud networks and connections</p>
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* Sidebar */}
+        <div>
+          <div className="card p-6 sticky top-20">
+            <h3 className="font-bold text-gray-900 mb-4">Integration Status</h3>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-yellow-400"></span>
+                <span className="text-sm text-gray-700">Awaiting Backend Endpoint</span>
+              </div>
+              <div className="text-xs text-gray-500 mt-4">
+                <strong>Required endpoint:</strong>
+                <code className="block mt-1 p-2 bg-gray-100 rounded font-mono text-xs">GET /gnn/fraud-rings</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </AdminLayout>
   )
 }
