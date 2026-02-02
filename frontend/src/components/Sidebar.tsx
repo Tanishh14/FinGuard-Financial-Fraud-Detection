@@ -1,23 +1,33 @@
 export default function Sidebar() {
-  return (
-    <aside className="w-64 bg-white border-r p-4">
-      <h2 className="text-sm font-semibold text-gray-600 mb-4">
-        Detection Modules
-      </h2>
+  const modules = [
+    { name: 'GNN Fraud Rings', icon: '🔗', color: 'bg-blue-50' },
+    { name: 'Anomaly Detection', icon: '⚡', color: 'bg-blue-50' },
+    { name: 'LLM + RAG Explainability', icon: '🧠', color: 'bg-blue-50' },
+    { name: 'Live Transactions', icon: '💰', color: 'bg-blue-50' },
+  ];
 
-      <ul className="space-y-2 text-sm">
-        <li className="p-2 rounded hover:bg-blue-50 cursor-pointer">
-          GNN Fraud Rings
-        </li>
-        <li className="p-2 rounded hover:bg-blue-50 cursor-pointer">
-          Anomaly Detection
-        </li>
-        <li className="p-2 rounded hover:bg-blue-50 cursor-pointer">
-          Explainability (LLM)
-        </li>
-        <li className="p-2 rounded hover:bg-blue-50 cursor-pointer">
-          Live Transactions
-        </li>
+  return (
+    <aside className="w-72 bg-white border-r border-gray-200 p-6 shadow-sm">
+      <div className="mb-8">
+        <h2 className="text-xs font-bold text-gray-600 mb-4 uppercase tracking-widest">
+          Detection Modules
+        </h2>
+      </div>
+
+      <ul className="space-y-3">
+        {modules.map((module, idx) => (
+          <li
+            key={idx}
+            className="group relative p-3 rounded-lg cursor-pointer transition-all duration-300 hover:translate-x-1 bg-gray-50 border border-gray-200 hover:bg-blue-50 hover:border-blue-300"
+          >
+            <div className="relative flex items-center gap-3">
+              <span className="text-lg">{module.icon}</span>
+              <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
+                {module.name}
+              </span>
+            </div>
+          </li>
+        ))}
       </ul>
     </aside>
   )
