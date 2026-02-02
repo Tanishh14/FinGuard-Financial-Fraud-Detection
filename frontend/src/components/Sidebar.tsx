@@ -1,10 +1,17 @@
+import { useNavigate, useLocation } from 'react-router-dom'
+
 export default function Sidebar() {
+  const navigate = useNavigate()
+  const location = useLocation()
+
   const modules = [
-    { name: 'GNN Fraud Rings', icon: '🔗', color: 'bg-blue-50' },
-    { name: 'Anomaly Detection', icon: '⚡', color: 'bg-blue-50' },
-    { name: 'LLM + RAG Explainability', icon: '🧠', color: 'bg-blue-50' },
-    { name: 'Live Transactions', icon: '💰', color: 'bg-blue-50' },
-  ];
+    { name: 'GNN Fraud Rings', icon: '🔗', path: '/gnn-fraud-rings' },
+    { name: 'Anomaly Detection', icon: '⚡', path: '/anomaly-detection' },
+    { name: 'LLM + RAG Explainability', icon: '🧠', path: '/explainability' },
+    { name: 'Live Transactions', icon: '💰', path: '/live-transactions' },
+  ]
+
+  const isActive = (path: string) => location.pathname === path
 
   return (
     <aside className="w-72 bg-white border-r border-gray-200 p-6 shadow-sm">
@@ -18,11 +25,20 @@ export default function Sidebar() {
         {modules.map((module, idx) => (
           <li
             key={idx}
-            className="group relative p-3 rounded-lg cursor-pointer transition-all duration-300 hover:translate-x-1 bg-gray-50 border border-gray-200 hover:bg-blue-50 hover:border-blue-300"
+            onClick={() => navigate(module.path)}
+            className={`group relative p-3 rounded-lg cursor-pointer transition-all duration-300 hover:translate-x-1 border ${
+              isActive(module.path)
+                ? 'bg-blue-50 border-blue-300'
+                : 'bg-gray-50 border-gray-200 hover:bg-blue-50 hover:border-blue-300'
+            }`}
           >
             <div className="relative flex items-center gap-3">
               <span className="text-lg">{module.icon}</span>
-              <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
+              <span className={`text-sm font-medium transition-colors ${
+                isActive(module.path)
+                  ? 'text-blue-600'
+                  : 'text-gray-700 group-hover:text-blue-600'
+              }`}>
                 {module.name}
               </span>
             </div>
@@ -32,3 +48,4 @@ export default function Sidebar() {
     </aside>
   )
 }
+
