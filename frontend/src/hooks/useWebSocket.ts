@@ -10,5 +10,5 @@ export const useWebSocket = (onMessage: (data: any) => void) => {
     return () => {
       wsRef.current?.close()
     }
-  }, [])
+  }, [onMessage])
 }
