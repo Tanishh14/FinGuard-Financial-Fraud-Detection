@@ -29,6 +29,11 @@ export default function Login() {
     if (e.key === 'Enter') submit()
   }
 
+  const testBypass = (role: 'user' | 'admin') => {
+    login('test-token-' + role, role)
+    navigate('/dashboard')
+  }
+
   return (
     <div className="w-full max-w-md">
       {/* Logo and Branding */}
@@ -97,6 +102,25 @@ export default function Login() {
               'Sign In'
             )}
           </button>
+
+          {/* Development Bypass - Remove in production */}
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <p className="text-xs text-gray-500 text-center mb-3">Dev Mode - Quick Access</p>
+            <div className="flex gap-2">
+              <button
+                className="flex-1 px-3 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                onClick={() => testBypass('user')}
+              >
+                Test as User
+              </button>
+              <button
+                className="flex-1 px-3 py-2 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+                onClick={() => testBypass('admin')}
+              >
+                Test as Admin
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="mt-6 pt-6 border-t border-gray-200 text-center text-sm text-gray-600">
