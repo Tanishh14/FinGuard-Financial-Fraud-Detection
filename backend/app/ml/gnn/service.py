@@ -4,6 +4,6 @@ class GNNService:
     def __init__(self, model):
         self.model = model.eval()
 
+    @torch.no_grad()
     def score_nodes(self, graph):
-        with torch.no_grad():
-            return self.model(graph.x, graph.edge_index)
+        return self.model(graph.x, graph.edge_index)
